@@ -1,0 +1,6 @@
+@WebAPI_CICD_HostAddress = http://localhost:5062
+
+GET {{WebAPI_CICD_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
