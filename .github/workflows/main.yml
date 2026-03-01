@@ -1,47 +1,50 @@
-name: .NET WebAPI CICD Deploy
+name: Deploy WebAPI to VPS
 
 on:
   push:
-    branches: ["master"]
-
-env:
-  IMAGE_NAME: myapp
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 8.0.x
-
-    - name: Publish
-      run: dotnet publish -c Release -o publish
-
-    - name: Build Image
-      run: docker build -t username/myapp:latest .
-
-    - name: Push Image
-      run: docker push username/${{ env.IMAGE_NAME }}:latest
-      # 公开仓库可以不登录
-
   deploy:
-    needs: build-and-push
     runs-on: ubuntu-latest
 
     steps:
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v0.1.7
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: List files for debug
+      run: |
+        pwd
+        ls -R
+
+    - name: Build Docker Image
+      run: |
+        docker build \
+          -f ./WebAPI_CICD/Dockerfile \
+          -t webapi:latest \
+          ./WebAPI_CICD
+
+    - name: Save Docker Image as tar
+      run: docker save webapi:latest -o webapi.tar
+
+    - name: Copy Image to VPS
+      uses: appleboy/scp-action@v0.1.7
       with:
-        host: ${{ secrets.DEPLOY_HOST }}
-        username: ${{ secrets.DEPLOY_USER }}
-        key: ${{ secrets.DEPLOY_KEY }}
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        source: "webapi.tar"
+        target: "/tmp"
+
+    - name: Deploy on VPS
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
-          docker pull username/myapp:latest
-          docker stop myapp || true
-          docker rm myapp || true
-          docker run -d --name myapp -p 80:80 username/myapp:latest
+          docker load -i /tmp/webapi.tar
+          docker stop webapi || true
+          docker rm webapi || true
+          docker run -d --name webapi -p 80:80 webapi:latest
