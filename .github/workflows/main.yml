@@ -23,7 +23,7 @@ jobs:
       run: dotnet publish -c Release -o publish
 
     - name: Build Image
-      run: docker build -t username/${{ env.IMAGE_NAME }}:latest ./publish
+      run: docker build -t username/myapp:latest .
 
     - name: Push Image
       run: docker push username/${{ env.IMAGE_NAME }}:latest
