@@ -22,6 +22,10 @@ jobs:
     - name: Publish
       run: dotnet publish -c Release -o publish
 
+    - name: cd
+      run: cd WebAPI_CICD
+
+
     - name: Build Image
       run: docker build -t username/myapp:latest .
 
