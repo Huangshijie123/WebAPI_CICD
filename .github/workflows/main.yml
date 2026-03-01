@@ -1,49 +1,47 @@
-name: .NET WebAPI CI/CD
+name: .NET WebAPI CICD Deploy
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
+
+env:
+  IMAGE_NAME: myapp
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '8.0.x'  # 根据你项目版本
-
-    - name: Restore dependencies
-      run: dotnet restore
-
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-
-    - name: Run tests
-      run: dotnet test --no-restore --verbosity normal
+        dotnet-version: 8.0.x
 
     - name: Publish
-      run: dotnet publish -c Release -o ./publish
+      run: dotnet publish -c Release -o publish
 
-    - name: Deploy to Server via SSH
-      if: github.ref == 'refs/heads/master'
+    - name: Build Image
+      run: docker build -t username/myapp:latest .
+
+    - name: Push Image
+      run: docker push username/${{ env.IMAGE_NAME }}:latest
+      # 公开仓库可以不登录
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Deploy via SSH
       uses: appleboy/ssh-action@v0.1.7
       with:
         host: ${{ secrets.DEPLOY_HOST }}
         username: ${{ secrets.DEPLOY_USER }}
         key: ${{ secrets.DEPLOY_KEY }}
-        port: ${{ secrets.DEPLOY_PORT }}
         script: |
-          # 停止旧容器
+          docker pull username/myapp:latest
           docker stop myapp || true
           docker rm myapp || true
-          # 构建新镜像
-          docker build -t myapp:latest .
-          # 运行新容器
-          docker run -d --name myapp -p 80:80 myapp:latest
+          docker run -d --name myapp -p 80:80 username/myapp:latest
