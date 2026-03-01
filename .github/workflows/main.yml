@@ -3,6 +3,10 @@ name: Deploy WebAPI (No Registry)
 on:
   push:
     branches: [ main ]
+  
+  workflow_dispatch:
+    
+  
 
 jobs:
   deploy:
