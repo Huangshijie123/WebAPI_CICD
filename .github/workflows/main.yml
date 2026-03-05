@@ -26,8 +26,9 @@ jobs:
           ./WebAPI_CICD
 
     - name: Save Docker Image as tar
-      run: docker save webapi:latest -o webapi.tar
-           chmod 644 webapi.tar
+      run: | 
+          docker save webapi:latest -o webapi.tar
+          chmod 644 webapi.tar
 
     - name: Check tar file
       run: |
