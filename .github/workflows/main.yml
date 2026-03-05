@@ -27,6 +27,11 @@ jobs:
 
     - name: Save Docker Image as tar
       run: docker save webapi:latest -o webapi.tar
+           chmod 644 webapi.tar
+
+    - name: Check tar file
+      run: |
+        ls -lh
 
     - name: Copy Image to VPS
       uses: appleboy/scp-action@v0.1.7
