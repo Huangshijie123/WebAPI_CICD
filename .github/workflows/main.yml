@@ -2,7 +2,7 @@ name: Deploy WebAPI to VPS
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
