@@ -13,28 +13,19 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: List files for debug
-      run: |
-        pwd
-        ls -R
-
-    - name: Build Docker Image
+    - name: 创建docker镜像
       run: |
         docker build \
           -f ./WebAPI_CICD/Dockerfile \
           -t webapi:latest \
           ./WebAPI_CICD
 
-    - name: Save Docker Image as tar
+    - name: 打包镜像
       run: | 
           docker save webapi:latest -o webapi.tar
           chmod 644 webapi.tar
 
-    - name: Check tar file
-      run: |
-        ls -lh
-
-    - name: Copy Image to VPS
+    - name: 镜像压缩包复制到vps
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.SERVER_HOST }}
@@ -43,7 +34,7 @@ jobs:
         source: "webapi.tar"
         target: "/tmp"
 
-    - name: Deploy on VPS
+    - name: 部署到 VPS
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SERVER_HOST }}
